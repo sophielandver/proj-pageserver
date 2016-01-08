@@ -55,7 +55,7 @@ def serve(sock, func):
 	while True:
 		print("Attempting to accept a connection on {}".format(sock))
 		(clientsocket, address) = sock.accept()
-		_thread.start_new_thread(func, (clientsocket,)) #make window pop up with cat in it
+		_thread.start_new_thread(func, (clientsocket,)) #call the function respond 
 
 
 CAT = """
