@@ -7,17 +7,21 @@ Socket programming in Python
   error handling and many other things to keep the illustration as simple
   as possible. 
 
-  FIXME:
-  Currently this program always serves an ascii graphic of a cat.
-  Change it to serve files if they end with .html and are in the current directory
+  This pageserver serves web pages (text files with names that end with .html) 
+  and style sheets (text files that end with .css) from the directory in which the server 
+  is run. It rejects URLs that contain '~' or '..' or '//', and therefore cannot be 
+  used to read files outside of that directory.
+  
+  This file is the server and the web browser is the client. This server is run, and then
+  is listening on a randomly chosen port, and then a URL is given through the web browser. 
+  At that point, if the URL satisfies the above criteria then it will be fetched from the 
+  current directory and served. Else, an error message will appear in the web browser. 
+  
 """
 
 import socket	 # Basic TCP/IP communication on the internet
 import random	 # To pick a port at random, giving us some chance to pick a port not in use
 import _thread	 # Response computation runs concurrently with main program 
-
-
-#fix listen function
 
 
 def listen(portnum):
@@ -48,16 +52,6 @@ def serve(sock, func):
 		For each connection, func is called on a client socket connected
 		to the connected client, running concurrently in its own thread.
 	"""
-	#when a request comes in it accepts the connection and it creates this socket. The address we just lose. the socket
-	#is like a connection. a request comes in we create a connection and we pass the connection into the function 
-	#we need to read in the text by using "request = sock.recv(1024)" which takes in the first charcters of the request 
-	#so we arent always sending a cat
-	#if someone asked for trivial.html then you would send them back to it 
-	#where does the user ask for something 
-	#user asks for something 
-	#try to open the file using try/accept block. You try opening the file and if you succeeded then you send the contetnts of the file
-	#if you didnt find it then it doesnt exits in current directory 
-	#where do they ask for the URL. they give me a URL. and where will it be 
 	while True:
 		print("Attempting to accept a connection on {}".format(sock))
 		(clientsocket, address) = sock.accept()
@@ -72,15 +66,19 @@ CAT = """
 
 def respond(sock):
 	"""
-	Respond (only) to GET
-
+	Respond (only) to GET. If the requested URL is a ".html" or a ".css" AND it does not 
+	contain "~" or ".." or "//" AND it is in the current directory, then it will be served.
+	Else, an error message will appear in the browser. 
+	Args:
+	    sock: A server socket, already listening on some port.
+	Returns: None
+	Effects: If the requested URL is a ".html" or a ".css" AND it does not 
+	contain "~" or ".." or "//" AND it is in the current directory, then it will be served.
+	Else, an error message will appear in the browser. 
 	"""
 	sent = 0
-	request = sock.recv(1024)  # We accept only short requests. This is where you get the request  
-	request = str(request, encoding='utf-8', errors='strict')
-	#THIS IS WHERE YOU FIX THINGS WITH THE request
-	#you want to ask questions about request AND you dont always wanna transmit a cat but instead transmit 
-	#whatever URL the request is 
+	request = sock.recv(1024)  #this is the requested URL  
+	request = str(request, encoding='utf-8', errors='strict') 
 	print("\nRequest was {}\n".format(request))
 
 	parts = request.split()
@@ -90,21 +88,18 @@ def respond(sock):
 		    transmit("HTTP/1.0 403 Forbidden\n\n", sock)
 		    transmit("403 Forbidden\n\n", sock)
 		elif web_part.endswith(".html") or web_part.endswith(".css"):
-		#try to open it in order to see if it is current directory
 			try:
 				file_url = web_part[1:]
 				file = open(file_url, "r")
+				#if here means file is in current directory
 				list = []
 				for line in file:
 				    list.append(line)
 				web_string = " ".join(list)
-				#send content with the proper http type use transmit
-				#http_url = "https://" + file_url
-				#sock.send(http_url)
-				transmit("HTTP/1.0 200 OK\n\n", sock)
+				transmit("HTTP/1.0 200 OK\n\n", sock) #telling web browser that the request was successful. must do this
 				transmit(web_string, sock)
 			except IOError:
-				#send 404 not found using transmit 
+			    #if here means file is not in current directory. 
 				transmit("HTTP/1.0 404 Not Found\n\n", sock)
 				transmit("404 Not Found\n\n", sock)
 		else:
@@ -112,10 +107,9 @@ def respond(sock):
 		    transmit("403 Forbidden\n\n", sock)
 			 
 	
-		#transmit(CAT, sock)
 	else:
-		transmit("HTTP/1.0 400 bad request\n\n", sock)
-		transmit("400 bad request\n\n", sock)
+		transmit("HTTP/1.0 400 Bad Request\n\n", sock)
+		transmit("400 Bad Request\n\n", sock)
 
 	sock.close()
 
