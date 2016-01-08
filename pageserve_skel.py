@@ -87,7 +87,7 @@ def respond(sock):
 	if len(parts) > 1 and parts[0] == "GET":
 		web_part = parts[1]
 		if (".." in web_part) or ("//" in web_part) or ("~" in web_part):
-		    #transmit("\nI don't handle this request: {}\n".format(request), sock)
+		    transmit("HTTP/1.0 403 Forbidden\n\n", sock)
 		    transmit("403 Forbidden\n\n", sock)
 		elif web_part.endswith(".html") or web_part.endswith(".css"):
 		#try to open it in order to see if it is current directory
@@ -101,19 +101,21 @@ def respond(sock):
 				#send content with the proper http type use transmit
 				#http_url = "https://" + file_url
 				#sock.send(http_url)
-				transmit("200 OK\n\n", sock)
+				transmit("HTTP/1.0 200 OK\n\n", sock)
 				transmit(web_string, sock)
 			except IOError:
 				#send 404 not found using transmit 
+				transmit("HTTP/1.0 404 Not Found\n\n", sock)
 				transmit("404 Not Found\n\n", sock)
 		else:
-		    print("Sophie")
-		    #transmit("HTTP/1.0 403 Forbidden\n\n", sock)
+		    transmit("HTTP/1.0 403 Forbidden\n\n", sock)
+		    transmit("403 Forbidden\n\n", sock)
 			 
 	
 		#transmit(CAT, sock)
 	else:
 		transmit("HTTP/1.0 400 bad request\n\n", sock)
+		transmit("400 bad request\n\n", sock)
 
 	sock.close()
 
